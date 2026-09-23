@@ -1,0 +1,171 @@
+# ==========================================
+# ARQUIVO 1: requirements.txt
+# ==========================================
+pygame>=2.5.0
+
+# ==========================================
+# ARQUIVO 2: main.py
+# ==========================================
+import pygame
+import random
+import sys
+
+pygame.init()
+
+LARGURA = 800
+ALTURA = 600
+tela = pygame.display.set_mode((LARGURA, ALTURA))
+pygame.display.set_caption("Space Defender 2D")
+
+COR_FUNDO = (15, 15, 25)
+COR_NAVE = (50, 150, 255)
+COR_TIRO = (50, 255, 150)
+COR_INIMIGO = (255, 80, 80)
+COR_TEXTO = (255, 255, 255)
+
+relogio = pygame.time.Clock()
+FPS = 60
+
+class Jogador(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((40, 40))
+        self.image.fill(COR_NAVE)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = LARGURA // 2
+        self.rect.bottom = ALTURA - 20
+        self.velocidade = 7
+
+    def update(self):
+        teclas = pygame.key.get_pressed()
+        if teclas[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.velocidade
+        if teclas[pygame.K_RIGHT] and self.rect.right < LARGURA:
+            self.rect.x += self.velocidade
+
+    def atirar(self):
+        tiro = Tiro(self.rect.centerx, self.rect.top)
+        todos_sprites.add(tiro)
+        tiros.add(tiro)
+
+class Inimigo(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        tamanho = random.randint(25, 45)
+        self.image = pygame.Surface((tamanho, tamanho))
+        self.image.fill(COR_INIMIGO)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randint(0, LARGURA - self.rect.width)
+        self.rect.y = random.randint(-100, -40)
+        self.velocidade = random.randint(3, 6)
+
+    def update(self):
+        self.rect.y += self.velocidade
+        if self.rect.top > ALTURA:
+            self.rect.x = random.randint(0, LARGURA - self.rect.width)
+            self.rect.y = random.randint(-100, -40)
+            self.velocidade = random.randint(3, 6)
+
+class Tiro(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((6, 12))
+        self.image.fill(COR_TIRO)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.bottom = y
+        self.velocidade = -9
+
+    def update(self):
+        self.rect.y += self.velocidade
+        if self.rect.bottom < 0:
+            self.kill()
+
+todos_sprites = pygame.sprite.Group()
+inimigos = pygame.sprite.Group()
+tiros = pygame.sprite.Group()
+
+jogador = Jogador()
+todos_sprites.add(jogador)
+
+for _ in range(7):
+    inimigo = Inimigo()
+    todos_sprites.add(inimigo)
+    inimigos.add(inimigo)
+
+pontuacao = 0
+fonte = pygame.font.SysFont("arial", 26)
+game_over = False
+
+rodando = True
+while rodando:
+    relogio.tick(FPS)
+
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:
+            rodando = False
+        elif evento.type == pygame.KEYDOWN:
+            if evento.key == pygame.K_SPACE and not game_over:
+                jogador.atirar()
+
+    if not game_over:
+        todos_sprites.update()
+
+        colisoes = pygame.sprite.groupcollide(inimigos, tiros, True, True)
+        for _ in colisoes:
+            pontuacao += 10
+            novo_inimigo = Inimigo()
+            todos_sprites.add(novo_inimigo)
+            inimigos.add(novo_inimigo)
+
+        if pygame.sprite.spritecollide(jogador, inimigos, False):
+            game_over = True
+
+    tela.fill(COR_FUNDO)
+    todos_sprites.draw(tela)
+
+    texto_pontos = fonte.render(f"Pontos: {pontuacao}", True, COR_TEXTO)
+    tela.blit(texto_pontos, (15, 15))
+
+    if game_over:
+        texto_fim = fonte.render("GAME OVER - Feche a janela para encerrar", True, COR_INIMIGO)
+        rect_fim = texto_fim.get_rect(center=(LARGURA // 2, ALTURA // 2))
+        tela.blit(texto_fim, rect_fim)
+
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()
+
+# ==========================================
+# ARQUIVO 3: README.md
+# ==========================================
+# 🚀 Space Defender 2D
+
+Projeto de jogo em 2D desenvolvido para trabalho acadêmico utilizando a linguagem **Python** e a biblioteca **Pygame**.
+
+## 📖 Sobre o Jogo
+O **Space Defender 2D** é um jogo arcade no estilo *Space Shooter*. O jogador controla uma nave espacial na parte inferior da tela, movendo-se para os lados para se esquivar e atirar em alvos que descem continuamente.
+
+### O que o jogo faz:
+- **Movimentação:** Controle lateral da nave.
+- **Sistema de Tiros:** Disparo de projéteis com colisão em tempo real.
+- **Pontuação:** Ganhe pontos a cada alvo atingido.
+- **Detecção de Colisão:** Fim de jogo imediato ao ser atingido por um obstáculo.
+
+## 🛠️ Como Executar
+
+### Pré-requisitos
+- Python instalado (versão 3.8 ou superior).
+
+### Passos:
+1. Clone este repositório:
+   git clone https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
+2. Instale as dependências:
+   pip install -r requirements.txt
+3. Inicie o jogo:
+   python main.py
+
+## 🎮 Controles
+- **Seta Esquerda / Direita:** Move a nave.
+- **Barra de Espaço:** Atira.
